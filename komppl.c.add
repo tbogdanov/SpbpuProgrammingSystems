@@ -1,0 +1,282 @@
+
+
+/* Добавлено для курсового проекта.
+ * Этот метод возвращает обратную маску условного перехода
+ * для символа в конструкции сравнения.
+ * Возвращается -1, если символ не поддерживается или некорректен.
+ * Таблица битов в маске сравнения (путём вычитания второго операнда из первого)
+ * Result is zero 	Z 	0     (*1)
+ * Result is negative 	N 	1     (*2)
+ * Result is positive 	P 	2     (*4)
+ * Result overflows 	O 	3     (*8)
+ */
+
+int compare_reverse_mask(char mask_symbol)
+{
+    printf("Символ сравнения в IF сейчас равен %c\n", mask_symbol);
+        
+    switch(mask_symbol)
+    {
+        case '<': return 11; break;
+        case '>': return 13; break;
+        case '=': return  7; break;
+        default:
+            return -1;
+    }
+}
+
+/* Удобный метод для внесения заданной операции со строкой операнд
+ * ZKARD() вызывается отдельно.
+ */
+
+void put_operation(char* oper, char* operands)
+{
+    memcpy ( ASS_CARD._BUFCARD.OPERAC, oper, strlen(oper) );
+    memcpy ( ASS_CARD._BUFCARD.OPERAND, operands, strlen(operands));
+}
+
+/* Удобный метод для обозначения метки с заданным номером.
+ * ZKARD() вызывается отдельно.
+ */
+
+void put_label(int number)
+{
+    char label[8];
+    sprintf(label, "@L%d:", number);
+    memcpy ( ASS_CARD._BUFCARD.METKA, &label, strlen(label));
+    printf("Putting label %s", label);
+}
+
+/* Удобный метод для условного перехода к заданной по номеру метке
+ * и обратной маске условия. ZKARD() вызывается отдельно.
+ */
+
+void put_bc_to_label(int number, int mask)
+{
+    char bc_operand[12];
+    sprintf(bc_operand, "%d,@L%d", mask, number);
+    put_operation("BC", bc_operand);
+    printf("Using BC %s", bc_operand);
+}
+
+// То же для безусловного перехода
+
+void put_bc_to_label(int number)
+{
+    put_bc_to_label(number, 15);
+}
+
+int IFB1 ()
+{
+    return 0;
+}
+
+int IFB2 ()
+{
+    return 0;
+}
+
+int OIF1 ()
+{
+    FORM ();
+    
+    char* symbol[2] = {FORMT[1], FORMT[3]};
+    int found = 0;
+    
+    for (int symi = 0; i < 2; i++)
+    {
+        found = 0;
+        
+        for (int i = 0; i < ISYM; i++ )                    
+        {                                              
+            if (  !strcmp ( SYM [i].NAME, symbol[symi] ) &&  
+                strlen ( SYM [i].NAME ) == strlen ( symbol[symi] ))
+            {
+                
+                if ((SYM[i].TYPE == 'B') && (!strcmp(SYM[i].RAZR, "15")))
+                    found = 1;
+                else
+                    return 3;
+            }
+        }
+        
+        if (!found)
+        {
+            printf("Не найдено объявление переменной %s для условного цикла", symbol[symi]);
+            return 4;
+        }
+    }
+    
+    had_if = 1;
+    
+    return 0;
+}
+
+int OIF2 ()
+{
+    FORM();
+    
+    char lh_operand[20];
+    char ch_operand[20];
+    
+    sprintf(lh_operand, "@RRAB,%s", FORMT[1]);
+    put_operation("LH", lh_operand);
+    ZKARD();
+    
+    sprintf(ch_operand, "@RRAB,%s", FORMT[3]);
+    put_operation("CH", ch_operand);
+    ZKARD();
+    
+    if (label_else == 0)
+    {
+        label_else = 1;
+        label_after = 2;
+    }
+    else
+    {
+        label_else += 2;
+        label_after += 2;
+    }
+    
+    char chr_mask = FORMT[2][0];
+    int mask = compare_reverse_mask(chr_mask);
+    
+    if (mask < 0)
+    {
+        printf("Маска условного перехода задана неверно. Правильно ли задан символ сравнения %c?", chr_mask);
+        return 2;
+    }
+    
+    put_bc_to_label(label_else, mask);
+    ZKARD();
+    
+    label_needed = 3;
+    label_next = label_else;
+    
+    return 0;
+}
+
+int OEL1 ()
+{
+    if (had_if == 0)
+    {
+        print("Повторное <OEL> либо <OEL> без <OIF>.\n");
+        return 5;
+    }
+    
+    had_if = 0;
+    
+    return 0;
+}
+
+int OEL2 ()
+{
+    put_bc_to_label(label_after);
+    ZKARD ();
+    
+    label_needed = 4;
+    next_label = label_else;
+    
+    return 0;
+}
+
+int OPA2 ()
+{
+ 
+    ...
+    
+    switch (label_needed)
+    {
+        case 1:
+            put_label(label_next);
+            label_needed = 0;
+            break;
+        case 3:
+            label_needed = 1;
+            break;
+        case 4:
+            put_label(label_next);
+            label_next = label_after;
+            label_needed = 1;
+            break;
+    }
+    
+    
+}
+
+int ODO1 ()
+{
+    if (had_do == 1)
+    {
+        print("Повторное <ODO>. К сожалению, вложенность <ODO> не поддерживается.\n");
+        return 5;
+    }
+    
+    had_do = 1;
+    
+    return 0;
+}
+
+int ODO2 ()
+{
+    
+    if (label_needed == 4)
+    {
+        put_label(label_next);
+        label_next = label_after;
+    }
+    
+    label_needed = 2;
+    
+    return 0;
+}
+
+int OED1 ()
+{
+    if (had_do == 0)
+    {
+        print("Повторное <OED> либо <OED> без <ODO>. К сожалению, вложенность <ODO> не поддерживается.\n");
+        return 5;
+    }
+    
+    had_do = 0;
+    
+    return 0;
+}
+
+
+int OED2 ()
+{
+    label_needed = 1;
+    
+    return 0;
+}
+
+int OEN1 ()
+{
+ 
+    ...
+    if (had_do == 1)
+    {
+        print("Процедура закончилась внутри блока <ODO>-<OED>.");
+        return 5;
+    }
+    
+}
+
+int OEN2 ()
+{
+    ...
+    if (label_needed == 1)
+        put_label(next_label);
+}
+
+int CMP1 ()
+{
+    return 0;
+}
+
+int CMP2 ()
+{
+    return 0;
+}
