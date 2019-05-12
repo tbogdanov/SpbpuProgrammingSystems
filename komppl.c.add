@@ -280,3 +280,61 @@ int CMP2 ()
 {
     return 0;
 }
+
+
+
+int find_constants_by_value(int x)
+{
+   char * char_x[10] = {'\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0'};
+   sprintf(char_x, "%d", x);
+    
+   for ( i = 0; i < ISYM; i++ )                    
+   {                                              
+    if (SYM[i].TYPE = 'C' && !strcmp ( SYM [i].INIT, char_x ))
+     return i;                                    
+   }
+   
+   return -1;
+}
+
+int find_symbols_by_name(char* name)
+{
+   for ( i = 0; i < ISYM; i++ )                    
+   {                                              
+    if (  !strcmp ( SYM [i].NAME, FORMT [1] ) &&  
+	  strlen ( SYM [i].NAME ) ==             
+			     strlen ( FORMT [1] )
+       )
+     return i;                                    
+   }
+   
+   return -1;
+}
+
+
+int find_or_declare_constant(int x)
+{
+    int srch = find_constants_by_value(x);
+    if (srch > -1)
+        return srch;
+    
+    NCONST++;
+    
+    char * new_const_name[8] = {'\x0\x0\x0\x0\x0\x0\x0\x0'};
+    sprintf(new_const_name, "@C%d", NCONST);
+    strcpy(SYM[ISYM].NAME, &new_const_name);
+    
+    SYM[ISYM].TYPE = 'C'; // Binary Fixed Constant
+    
+    strcpy(SYM[ISYM].RAZR, "15");
+    
+    char * char_x[10] = {'\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0'};
+    sprintf(char_x, "%d", x);
+    strcpy(SYM[ISYM].INIT, &char_x);
+    SYM[ISYM].HAS_INIT = 1;
+    
+    ISYM++;
+    
+    return ISYM-1;
+}
+
