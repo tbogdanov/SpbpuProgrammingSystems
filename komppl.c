@@ -26,29 +26,18 @@
 						  /* мента исх.текста;      */
 #define NSYM      100                             /* - таблицы имен и меток */
 
-#define LABEL_NOT_NEEDED 0
-#define LABEL_ON_NEXT 1
-#define LABEL_ON_END 2
-#define LABEL_DEPENDS_ON_DO 3
-#define LABEL_ON_NEXT_AND_AFTER 4
-
-#define VERBOSE 1
 
 // Добавлено в рамках курсовой работы, вариант 17
 
-/* 
- * Создавая условный переход if, мы делаем следующее:
+
+/* Создавая условный переход if, мы делаем следующее:
  * 1. Нумеруем метки в label_else и label_after
  * 2. Создаём условие для перехода на метку для else - оно противоположно
  *    условию для перехода в часть после then
  * 3. В операторе условного перехода кидаем условие из (2) и номер ветки label_else
  *    из (1)
- */
-
-int label_else = 0;
-int label_after = 0;
-
-/* label_needed регулирует, когда нам будет нужна следующая метка для else или after.
+ * 
+ * label_needed регулирует, когда нам будет нужна следующая метка для else или after.
  * Это значение могут менять конструкции <OIF>, <OEL>, <ODO>, <OED>.
  * Теоретически учёт этой переменной можно реализовать где угодно, но в рамках работы
  * ограничимся только <OEN> и <OPA>.
@@ -69,6 +58,17 @@ int label_after = 0;
  * 
  * label_next регулирует номер следующей метки (сюда идут значения из label_else и label_after)
  */
+
+#define LABEL_NOT_NEEDED 0
+#define LABEL_ON_NEXT 1
+#define LABEL_ON_END 2
+#define LABEL_DEPENDS_ON_DO 3
+#define LABEL_ON_NEXT_AND_AFTER 4
+
+#define VERBOSE 1
+
+int label_else = 0;
+int label_after = 0;
 
 int label_needed = LABEL_NOT_NEEDED;
 int label_next = 0;
@@ -431,13 +431,12 @@ struct
  {/*.  178     .*/     0 ,   177 , "*  " ,    0 },
   /*.                                              вход с символа - TEL    */
   
-  // ??? Почему-то, если сделать каскад из альтернатив ODC → OPA → OIF или ODC → IFB → OPA, то синтанализ не пройдёт.
  {/*.  179     .*/   180 ,     0 , "TEL" ,    0 },
- {/*.  180     .*/   181 ,   179 , "ODC" ,  251 }, // либо OPA (183), либо IFB (251) 
+ {/*.  180     .*/   181 ,   179 , "ODC" ,  251 }, 
  {/*.  181     .*/   182 ,   180 , "TEL" ,    0 },
  {/*.  182     .*/     0 ,   181 , "*  " ,    0 },
 
- {/*.  183     .*/   184 ,   179 , "OPA" ,    0 }, // IFB: 251
+ {/*.  183     .*/   184 ,   179 , "OPA" ,    0 }, 
  {/*.  184     .*/   185 ,   183 , "TEL" ,    0 }, 
  {/*.  185     .*/     0 ,   184 , "*  " ,    0 },
 
@@ -530,8 +529,7 @@ struct
  {/*.  249     .*/   250 ,   248 , "CMP" ,    0 },
  {/*.  250     .*/     0 ,   249 , "*  " ,    0 },
  
- // ??? Почему-то, если сделать каскад из альтернатив ODC → OPA → OIF или ODC → IFB → OPA, то синтанализ не пройдёт.
- {/*.  251     .*/   252 ,   179 , "IFB" ,    0 }, // OPA: 183
+ {/*.  251     .*/   252 ,   179 , "IFB" ,    0 },
  {/*.  252     .*/   253 ,   251 , "TEL" ,    0 },
  {/*.  253     .*/     0 ,   252 , "*  " ,    0 },
  
@@ -1139,7 +1137,7 @@ void put_operation(char* oper, char* operands)
 void put_label(int number)
 {
     char label[8];
-    sprintf(label, "@L%d:", number);
+    sprintf(label, "@L%d", number);
     memcpy ( ASS_CARD._BUFCARD.METKA, &label, strlen(label));
     if (VERBOSE) printf("Putting label %s\n", label);
 }
@@ -1156,6 +1154,8 @@ void put_bc_to_label(int number, int mask)
     if (VERBOSE) printf("Using BC %s\n", bc_operand);
 }
  
+// Найти индекс константы в списке символов 
+ 
 int find_constants_by_value(int x)
 {
    int i = 0;
@@ -1171,6 +1171,8 @@ int find_constants_by_value(int x)
    return -1;
 }
 
+// Найти символ по имени
+
 int find_symbols_by_name(char* name)
 {
     int i = 0;
@@ -1185,6 +1187,7 @@ int find_symbols_by_name(char* name)
    return -1;
 }
 
+// Найти константу и вывести её индекс в масиве символов, либо пополнить ей массив и тоже вывести индекс
 
 int find_or_declare_constant(int x)
 {
@@ -1212,6 +1215,8 @@ int find_or_declare_constant(int x)
     
     return ISYM-1;
 }
+
+// преобразование константы в int. поддерживаются только положительные, -1 для ошибки
 
 int to_number(char * s)
 {
@@ -1598,11 +1603,15 @@ int ZNK1 ()
 int AVI2 ()
  {
   char i;
-  FORM ();                                        /*форматируем правую часть*/
-						  /*арифметического ПЛ1-опе-*/
-						  /*ратора присваивания     */
+  FORM ();                                        
+  
+  /* Реализация переписана для поддержи литералов-констант
+   * Если такая ещё не объявлена, мы её объявим в find_or_declare_constant()
+   * Здесь symbol_left - часть до знака +/-/..., symbol_right - часть после
+   */
+  
 
-  if ( IFORMT == 2 )                              /* если правая часть одно-*/
+  if ( IFORMT == 2 )                              
    {
 
                                                                                             
@@ -1629,12 +1638,12 @@ int AVI2 ()
     
     if (VERBOSE) printf("Symbols are %d, %d\n", symbol_left, symbol_right);
     
-    //if (strcmp(SYM[symbol_left].RAZR, SYM[symbol_right].RAZR))
-    //    return 4;  // несовпадение разрядностей
+    if (strcmp(SYM[symbol_left].RAZR, SYM[symbol_right].RAZR))
+        return 4;  // несовпадение разрядностей
     
     int half = (!strcmp ( SYM [symbol_right].RAZR, "15" ));
     
-    if (half)
+   if (half)
         memcpy (ASS_CARD._BUFCARD.OPERAC, "LH", 2);
     else
         memcpy (ASS_CARD._BUFCARD.OPERAC, "L", 1);
