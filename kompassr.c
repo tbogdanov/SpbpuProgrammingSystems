@@ -8,6 +8,9 @@
 #include <stdio.h>                                /*вкл.подпр.станд.вв/выв  */
 #include <ctype.h>                                /*вкл.подпр.классиф.симв. */
 
+// Задать 1, если нужно показать отладочный лог
+#define VERBOSE 0
+
 /*
 ******* Б Л О К  об'явлений статических рабочих переменных
 */
@@ -143,6 +146,7 @@ int SRX();                                        /*подпр.обр.опер.R
      {{'L',' ',' ',' ',' '} , '\x58' , 4 , FRX} , /*машинных                */
      {{'A',' ',' ',' ',' '} , '\x5A' , 4 , FRX} , /*операций                */
      {{'S',' ',' ',' ',' '} , '\x5B' , 4 , FRX} , /*                        */
+     
      {{'L','H',' ',' ',' '} , '\x48' , 4 , FRX} , // добавлено
      {{'A','H',' ',' ',' '} , '\x4A' , 4 , FRX} , 
      {{'S','H',' ',' ',' '} , '\x4B' , 4 , FRX} , 
@@ -297,25 +301,9 @@ struct STR_BUF_END                                /*структ.буфера к
 
 int FDC()                                         /*подпр.обр.пс.опер.DC    */
  {
-  printf("FDC CHADR=%X\n", CHADR);
+  if (VERBOSE) printf("FDC CHADR=%X\n", CHADR);
   if ( PRNMET == 'Y' )                            //если псевдооп.DC помеч.,
    {                                              //то:                     
-    /*if                                            // если псевдооперация DC 
-     (                                            // определяет константу   
-      TEK_ISX_KARTA.STRUCT_BUFCARD.OPERAND[0]=='F'// типа F, то выполнить   
-     )                                            // следующее:             
-     {
-      T_SYM[ITSYM].DLSYM = 4;                     //  уст.длину симв. =  4, 
-      T_SYM[ITSYM].PRPER = 'R';                   //  а,призн.перемест.='R' 
-      if ( CHADR % 4 )                            //  и, если CHADR не указ.
-       {                                          //  на границу слова, то: 
-	CHADR = (CHADR /4 + 1) * 4;               //   уст.CHADR на гр.сл. и
-	T_SYM[ITSYM].ZNSYM = CHADR;               //   запомн. в табл.симв. 
-       }
-      PRNMET = 'N';                               //  занулить PRNMET зн.'N'
-     }
-    else
-     return (1);                                  // иначе выход по ошибке  */
     int symb_length = 0;
     
     switch (TEK_ISX_KARTA.STRUCT_BUFCARD.OPERAND[0])
@@ -346,23 +334,9 @@ int FDC()                                         /*подпр.обр.пс.оп�
 /*..........................................................................*/
 int FDS()                                         /*подпр.обр.пс.опер.DS    */
  {
-  printf("FDS CHADR=%X\n", CHADR);
-  if ( PRNMET == 'Y' )                            //если псевдооп.DC помеч.,
-   {                                              //то:                     
-    /*if                                            // если псевдооперация DC 
-     (                                            // определяет константу   
-      TEK_ISX_KARTA.STRUCT_BUFCARD.OPERAND[0]=='F'// типа F, то выполнить   
-     )                                            // следующее:             
-     {
-      T_SYM[ITSYM].DLSYM = 4;                     //  уст.длину симв. =  4, 
-      T_SYM[ITSYM].PRPER = 'R';                   //  а,призн.перемест.='R' 
-      if ( CHADR % 4 )                            //  и, если CHADR не указ
-       {                                          //  на границу слова, то: 
-	CHADR = (CHADR /4 + 1) * 4;               //   уст.CHADR на гр.сл. и
-	T_SYM[ITSYM].ZNSYM = CHADR;               //   запомн. в табл.симв. 
-       }
-      PRNMET = 'N';                               //  занулить PRNMET зн.'N'
-      */
+  if (VERBOSE) printf("FDS CHADR=%X\n", CHADR);
+  if ( PRNMET == 'Y' )                            
+   {                                             
     
     int symb_length = 0;
     switch (TEK_ISX_KARTA.STRUCT_BUFCARD.OPERAND[0])
@@ -444,7 +418,7 @@ int FUSING()                                      /*подпр.обр.пс.оп�
 /*..........................................................................*/
 int FRR()                                         /*подпр.обр.опер.RR-форм. */
  {
-  printf("FRR CHADR=%X\n", CHADR);
+  if (VERBOSE) printf("FRR CHADR=%X\n", CHADR);
   CHADR = CHADR + 2;                              /*увеличить сч.адр. на 2  */
   if ( PRNMET == 'Y' )                            /*если ранее обнар.метка, */
    {                                              /*то в табл. символов:    */
@@ -456,7 +430,7 @@ int FRR()                                         /*подпр.обр.опер.R
 /*..........................................................................*/
 int FRX()                                         /*подпр.обр.опер.RX-форм. */
  {
-  printf("FRX CHADR=%X\n", CHADR);
+  if (VERBOSE) printf("FRX CHADR=%X\n", CHADR);
   CHADR = CHADR + 4;                              /*увеличить сч.адр. на 4  */
   if ( PRNMET == 'Y' )                            /*если ранее обнар.метка, */
    {                                              /*то в табл. символов:    */
@@ -473,7 +447,7 @@ int FRX()                                         /*подпр.обр.опер.R
 
 void STXT( int ARG )                              /*подпр.формир.TXT-карты  */
  {
-  printf("STXT %d CHADR=%X\n", ARG, CHADR);
+  if (VERBOSE) printf("STXT %d CHADR=%X\n", ARG, CHADR);
   char *PTR;                                      /*рабоч.переменная-указат.*/
 
   PTR = (char *)&CHADR;                           /*формирование поля ADOP  */
@@ -484,7 +458,7 @@ void STXT( int ARG )                              /*подпр.формир.TXT-
   if ( ARG == 2 )                                 /*формирование поля OPER  */
    {
     memset ( TXT.STR_TXT.OPER , 64 , 4 );
-    memcpy ( TXT.STR_TXT.OPER,RR.BUF_OP_RR , 2 ); /* для RR-формата         */
+    memcpy ( TXT.STR_TXT.OPER, &RR.BUF_OP_RR, 2);
     TXT.STR_TXT.DLNOP [1] = 2;
    }
   else
@@ -493,12 +467,6 @@ void STXT( int ARG )                              /*подпр.формир.TXT-
     TXT.STR_TXT.DLNOP [1] = 4;
    }
   memcpy (TXT.STR_TXT.POLE9,ESD.STR_ESD.POLE11,8);/*формиров.идентифик.поля */
-
-  printf("STXT: TXT=");
-  for (int i = 0; i < sizeof TXT.STR_TXT.OPER; i ++) {
-    printf(" %02x", TXT.STR_TXT.OPER[i]);
-  }
-  printf("\n");
   
   memcpy ( OBJTEXT[ITCARD] , TXT.BUF_TXT , 80 );  /*запись об'ектной карты  */
   ITCARD += 1;                                    /*коррекц.инд-са своб.к-ты*/
@@ -510,7 +478,7 @@ int SDC()                                         /*подпр.обр.пс.оп�
  {
   char *RAB;                                      /*рабочая переменная      */
 
-  printf("SDC\n");
+  if (VERBOSE) printf("SDC\n");
   
   RX.OP_RX.OP   = 0;                              /*занулим два старших     */
   RX.OP_RX.R1X2 = 0;                              /*байта RX.OP_RX          */
@@ -539,11 +507,14 @@ int SDC()                                         /*подпр.обр.пс.оп�
   else if (!memcmp(TEK_ISX_KARTA.STRUCT_BUFCARD.OPERAND, "H'", 2))
   {
         RAB = strtok((char*)TEK_ISX_KARTA.STRUCT_BUFCARD.OPERAND+2, "'");
-        printf("SDC: %s in RAB -> %d to RR_OP, ", RAB, atoi(RAB));
-        RR.OP_RR.OP = atoi ( RAB );
-        RAB = (char *) &RR.OP_RR.R1R2;                /*приведение к соглашениям*/
-        swab ( RAB , RAB , 2 );                       /* ЕС ЭВМ                 */
-        printf("RR.OP_RR.OP = %d, RR.OP_RR.R2 = %d\n", RR.OP_RR.OP, RR.OP_RR.R1R2);
+        
+        /* Прямо в RR.BUF_OP_RR мы не можем записать,
+         * потому что он определяет весь union RR,
+         * но есть доступ к составляющим его байтам - RR.OP_RR.OP (первый байт),
+         * RR.OP_RR.R1R2 (второй байт) */
+        RR.OP_RR.OP = atoi(RAB) / 0x100;
+        RR.OP_RR.R1R2 = atoi ( RAB ) % 0x100;         
+        if (VERBOSE) printf("SDC: RAB = %s, RR.OP_RR.OP = %X, RR.OP_RR.R2 = %X\n", RAB, RR.OP_RR.OP, RR.OP_RR.R1R2);
         
         STXT (2);
   }
@@ -558,7 +529,7 @@ int SDC()                                         /*подпр.обр.пс.оп�
 /*..........................................................................*/
 int SDS()                                         /*подпр.обр.пс.опер.DS    */
  {
-  printf("SDS: %C\n", TEK_ISX_KARTA.STRUCT_BUFCARD.OPERAND[0]);
+  if (VERBOSE) printf("SDS: %C\n", TEK_ISX_KARTA.STRUCT_BUFCARD.OPERAND[0]);
   RX.OP_RX.OP   = 0;                              /*занулим два старших     */
   RX.OP_RX.R1X2 = 0;                              /*байта RX.OP_RX          */
   RX.OP_RX.B2D2 = 0;
@@ -736,7 +707,7 @@ int SRR()                                         /*подпр.обр.опер.R
   unsigned char R1R2;                             /*                        */
   int J;                                          /*                        */
   RR.OP_RR.OP = T_MOP[I3].CODOP;                  /*формирование кода операц*/
-  printf("RR: %.3s\n", T_MOP[I3].MNCOP);
+  if (VERBOSE) printf("RR: %.3s\n", T_MOP[I3].MNCOP);
 
   METKA1 = strtok                                 /*в перем. c указат.METKA1*/
 	   (                                      /*выбираем первую лексему */
@@ -820,7 +791,7 @@ int SRX()                                         /*подпр.обр.опер.R
   unsigned char R1X2;                             /*                        */
   int B2D2;                                       /*                        */
   RX.OP_RX.OP = T_MOP[I3].CODOP;                  /*формирование кода операц*/
-  printf("RX: %.3s\n", T_MOP[I3].MNCOP);
+  if (VERBOSE) printf("RX: %.3s\n", T_MOP[I3].MNCOP);
   METKA1 = strtok                                 /*в перем. c указат.METKA1*/
 	   (                                      /*выбираем первую лексему */
     (char*) TEK_ISX_KARTA.STRUCT_BUFCARD.OPERAND, /*операнда текущей карты  */
@@ -833,7 +804,7 @@ int SRX()                                         /*подпр.обр.опер.R
 	    " "                                   /*исх.текста АССЕМБЛЕРА   */
 	   );
 
-  printf("METKA1=%s\n", METKA1);
+  if (VERBOSE) printf("METKA1=%s\n", METKA1);
   if ( (isalpha ( (int) *METKA1 )) || (METKA1[0] == '@') )                /*если лексема начинается */
    {                                              /*с буквы, то:            */
     for ( J=0; J<=ITSYM; J++ )                    /* все метки исх.текста в */
@@ -845,24 +816,24 @@ int SRX()                                         /*подпр.обр.опер.R
       if( !strcmp ( METKA , METKA1 ) )            /* и при совпадении:      */
 
        {                                          /*  берем значение этой   */
-         printf("RX operand 1 acknowledged as symbol\n");
+         if (VERBOSE) printf("RX operand 1 acknowledged as symbol\n");
 	 R1X2 = T_SYM[J].ZNSYM << 4;              /*  метки в качестве перв.*/
 	 goto SRX1;
        }                                          /*  опреранда машинной ком*/
      }
-    printf("RX operand 1 unknown, returns 2\n");
+    if (VERBOSE) printf("RX operand 1 unknown, returns 2\n");
     return(2);                                    /*сообщ."необ'явл.идентиф"*/
    }
   else                                            /*иначе, берем в качестве */
    {                                              /*перв.операнда машинн.ком*/
-     printf("RX operand 1 acknowledged as value\n");
+     if (VERBOSE) printf("RX operand 1 acknowledged as value\n");
      R1X2 = atoi ( METKA1 ) << 4;                 /*значен.выбр.   лексемы  */
    }
 
 
  SRX1:
 
-  printf("METKA2=%s\n", METKA2);
+  if (VERBOSE) printf("METKA2=%s\n", METKA2);
   if ( (isalpha ( (int) *METKA2 )) || (METKA2[0] == '@') )                /*если лексема начинается */
    {                                              /*с буквы, то:            */
     for ( J=0; J<=ITSYM; J++ )                    /* все метки исх.текста в */
@@ -900,17 +871,17 @@ int SRX()                                         /*подпр.обр.опер.R
 	  swab ( PTR , PTR , 2 );                 /* с записью в тело ком-ды*/
 	  RX.OP_RX.B2D2 = B2D2;
 	 }
-        printf("RX operand 2 acknowledged as symbol\n");
+        if (VERBOSE) printf("RX operand 2 acknowledged as symbol\n");
 	goto SRX2;                                /*перех.на форм.первого   */
        }                                          /*  опреранда машинной ком*/
      }
-    printf("RX operand 2 unknown, returns 2\n");
+    if (VERBOSE) printf("RX operand 2 unknown, returns 2\n");
     return(2);                                    /*сообщ."необ'явл.идентиф"*/
    }
-  else                                            /*иначе, берем в качестве */
-   {                                              /*втор.операнда машинн.ком*/
-    printf("RX operand 2 errorneous, returns 4\n");
-    return(4);                                    /*значен.выбр.   лексемы  */
+  else                                         
+   {                                            
+    if (VERBOSE) printf("RX operand 2 errorneous, returns 4\n");
+    return(4);                                   
    }
 
  SRX2:
@@ -932,7 +903,6 @@ int SOBJFILE()                                    /*подпрогр.форми�
   else                                            /*иначе:                  */
    RAB2 =fwrite (OBJTEXT, 80 , ITCARD , fp);      /* формируем тело об.файла*/
    
-  printf("OBJTEXT:%s\n", OBJTEXT);
   fclose ( fp );                                  /*закрываем об'ектный файл*/
   return ( RAB2 );                                /*завершаем  подпрограмму */
 
@@ -1081,7 +1051,7 @@ main1:
 
   for ( I1=0; I1 < DL_ASSTEXT; I1++ )             /*для карт с 1 по конечную*/
    {                                              /*                        */
-    printf("%s\n", TEK_ISX_KARTA.BUFCARD);
+    if (VERBOSE) printf("%s\n", TEK_ISX_KARTA.BUFCARD);
     memcpy ( TEK_ISX_KARTA.BUFCARD , ASSTEXT[I1], /*ч-ть очередн.карту в буф*/
 					     80 );/*                        */
     if (TEK_ISX_KARTA.STRUCT_BUFCARD.METKA [0] == /*переход при отсутствии  */
@@ -1167,11 +1137,11 @@ CONT3:
  T_POP[4].BXPROG = SSTART;
  T_POP[5].BXPROG = SUSING;
 
- printf("=== CONT3;\n");
+ if (VERBOSE) printf("=== SECOND PASS-THROUGH ===\n");
  
   for ( I1=0; I1 < DL_ASSTEXT; I1++ )             /*для карт с 1 по конечную*/
    {     					  /*                        */
-    printf("%s\n", TEK_ISX_KARTA.BUFCARD);
+    if (VERBOSE) printf("%s\n", TEK_ISX_KARTA.BUFCARD);
     memcpy ( TEK_ISX_KARTA.BUFCARD , ASSTEXT [I1],/*ч-ть очередн.карту в буф*/
 					     80 );/*                        */
 /*
